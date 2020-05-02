@@ -1,0 +1,49 @@
+---
+- name: play 1
+  hosts: all
+  become: yes
+  vars:
+    administrator_name: corpadmin
+    administrator_password: xyz123
+  tasks:
+  - name: software package update
+    yum:
+       name: '*'
+       state: latest
+  - name: create user
+    user:
+       name: "{{administrator_name}}"
+       password: "{{administrator_password}}"
+
+- name: play 2
+  hosts: web1
+  become: yes
+  tasks:
+  - name: install nginx
+    yum: name=nginx state=latest
+  - name: copy a template to the system directory
+    template:
+       src: /home/ec2-user/assignment-ansible/default.conf.j2
+       dest: /etc/nginx/conf.d/default.conf
+  - name: start nginx and enable it when booting up
+    service:
+       name: nginx
+       enabled: yes
+       state: started
+
+- name: play 3
+  hosts: database1
+  become: yes
+  tasks:
+  - name: install mysql
+    yum: name=mysql-server state=latest
+  - name: start mysql and enable it when booting up
+    service:
+       name: mysqld
+       enabled: yes
+       state: started
+  - name: create directories
+    file:
+      dest: "/var/data/client{{item}}"
+      state: directory
+    with_sequence: start=1 end=5     
